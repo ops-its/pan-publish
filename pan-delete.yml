@@ -1,5 +1,5 @@
 - name: add a NAT rule to firewall
-  hosts: azure
+  hosts: local
   connection: local
   ignore_errors: yes 
   tasks:
