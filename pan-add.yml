@@ -1,0 +1,43 @@
+- name: add a NAT rule to firewall
+  hosts: azure
+  connection: local
+  ignore_errors: yes 
+  tasks:
+    - name: Add an dest address object to the firewall
+      panos_object:
+        ip_address: '{{ ip_address }}'
+        username: '{{ username }}'
+        password: '{{ password }}'
+        addressobject: 'dest_addr_{{ item.value.name }}'
+        address:  '{{ item.value.destip }}'
+        address_type: 'ip-netmask'
+        description: '{{ item.value.name }}'
+        operation: 'add'
+      with_dict: "{{ rules }}"
+    - name: Add an dnat address object to the firewall
+      panos_object:
+        ip_address: '{{ ip_address }}'
+        username: '{{ username }}'
+        password: '{{ password }}'
+        addressobject: 'dnat_addr_{{ item.value.name }}'
+        address:  '{{ item.value.dnatip }}'
+        address_type: 'ip-netmask'
+        description: '{{ item.value.name }}'
+        operation: 'add'
+      with_dict: "{{ rules }}"
+    - name: create NAT rule on firewall
+      panos_nat_rule:
+        ip_address: '{{ ip_address }}'
+        username: '{{ username }}'
+        password: '{{ password }}'
+        rule_name: 'dnat_rule_{{ item.value.name }}'
+        source_zone: ['Untrust']
+        destination_zone: 'Trust'
+        source_ip: '{{ item.value.srcip }}'
+        destination_ip: 'dest_addr_{{ item.value.name }}'
+        dnat_address: 'dnat_addr_{{ item.value.name }}'
+        dnat_port: '443'
+        service: 'service-http'
+        operation:  'add'
+        commit: False
+      with_dict: "{{ rules }}"
